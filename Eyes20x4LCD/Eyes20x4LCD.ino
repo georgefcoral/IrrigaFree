@@ -43,58 +43,92 @@
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
-/*Cejas del ojo*/
-byte cejainicio[8] = { B00000, B00011, B00111, B01100, B11000, B10000, B00000, B00000 };
-byte cejaenmedio[8]= {B00000,B11111,B11111,B00000,B00000,B00000,B00000,B00000};
-byte cejafinal [8]= {B00000,B11000,B11100,B00110,B00011,B00000,B00000};
+/*Ceja parts*/
+byte ceja11[8]={B00000,
+                B00000,
+                B00000,
+                B00001,
+                B00010,
+                B00100,
+                B01000,
+                B00000};
+byte ceja13[8]={B00000,
+                B00000,
+                B00000,
+                B10000,
+                B01000,
+                B00100,
+                B00010,
+                B00000};
 /*Ojo */
-byte ojo11[8]={B00001,B00011,B00110,B01100,B11000,B10000,B10000,B10000};
-byte ojo12[8]={B11111,B00000,B0000,B00000,B00000,B00000,B00000,B01110};
-byte ojo13[8]={B10000,B11000,B01100,B00110,B00011,B00001,B00001,B00001};
+byte ojo11[8]={B00001,B00011,B00110,B01100,B01100,B00100,B00100,B00100};
+//byte ojo12[8]={B11111,B00000,B0000,B00000,B00000,B00000,B00000,B01110};
+byte ojo13[8]={B10000,B11000,B01100,B00110,B00110,B00100,B00100,B00100};
 
-byte ojo21[8]={B10000,B10000,B10000,B10000,B10000,B10000,B10000,B10000};
+byte ojo21[8]={B11111,B00000,B00000,B00000,B00000,B00000,B00000,B00000};
 byte ojo22[8]={B11111,B11111,B11111,B11111,B11111,B11111,B11111,B01110};
 byte ojo23[8]={B00001,B00001,B00001,B00001,B00001,B00001,B00001,B00001};
 
-byte ojo31[8]={B11000,B01100,B00110,B00011,B00001,B00000,B00000,B00000};
+byte ojo31[8]={B00100,
+               B00110,
+               B00011,
+               B00000,
+               B00000,
+               B00000,
+               B00000,
+               B00000};
 byte ojo32[8]={B00000,B00000,B00000,B00000,B11111,B00000,B00000,B00000};
-byte ojo33[8]={B00011,B00110,B011000,B11000,B10000,B00000,B00000,B00000};
+byte ojo33[8]={ B00100,
+                B01100,
+                B11000,
+                B00000,
+                B00000,
+                B00000,
+                B00000,
+                B00000};
 
 
 void setup() {
-  lcd.begin(20, 4);
-  lcd.createChar(0,cejainicio);
-  lcd.createChar(1,cejaenmedio);
-  lcd.createChar(2,cejafinal);
-
-  lcd.createChar(3,ojo11);
-  lcd.createChar(4,ojo12);
-  lcd.createChar(5,ojo13);
-
-  lcd.createChar(6,ojo21);
-  lcd.createChar(7,ojo22);
-  lcd.createChar(8,ojo23);
-
-  lcd.createChar(9,ojo31);
-  lcd.createChar(10,ojo32);
-  lcd.createChar(11,ojo33);
-lcd.home();
-  //lcd.setCursor(1,1);
-  lcd.write(byte(0));
-  //lcd.write(byte(1));
- // lcd.write(byte(2));
-  //lcd.setCursor(5,2);
-  lcd.write(byte(3));
-  lcd.write(byte(4));
-  lcd.write(byte(5));
-  //lcd.setCursor(5,3);
-  lcd.write(byte(6));
-  lcd.write(byte(7));
-  lcd.write(byte(8));
-  //lcd.setCursor(5,4);
-  lcd.write(byte(9));
-  lcd.write(byte(10));
-  lcd.write(byte(11));
+lcd.createChar(byte(0),ojo11);
+lcd.createChar(byte(1),ojo21);
+lcd.createChar(byte(2),ojo13);
+lcd.createChar(byte(3),ojo31);
+lcd.createChar(byte(4),ojo33);
+lcd.createChar(byte(5),ceja11);
+lcd.createChar (byte(6),ceja13);
+lcd.begin(20,4);
+lcd.setCursor(5,0);
+lcd.write(byte(5));
+lcd.write(B10110000);
+lcd.write(byte(6));
+lcd.setCursor(12,0);
+lcd.write(byte(5));
+lcd.write(B10110000);
+lcd.write(byte(6));
+lcd.setCursor(5,1);
+lcd.write(byte(0));
+lcd.write(byte(1));
+lcd.write(byte(2));
+lcd.setCursor(12,1);
+lcd.write(byte(0));
+lcd.write(byte(1));
+lcd.write(byte(2));
+lcd.setCursor(5,2);
+lcd.write(B01111100);
+lcd.write(B01001111);
+lcd.write(B01111100);
+lcd.setCursor(12,2);
+lcd.write(B01111100);
+lcd.write(B01001111);
+lcd.write(B01111100);
+lcd.setCursor(5,3);
+lcd.write(byte(3));
+lcd.write(B10110000);
+lcd.write(byte(4));
+lcd.setCursor(12,3);
+lcd.write(byte(3));
+lcd.write(B10110000);
+lcd.write(byte(4));
 }
 
 void loop() {
