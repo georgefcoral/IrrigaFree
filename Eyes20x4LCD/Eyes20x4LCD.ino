@@ -42,7 +42,7 @@
 #include <DHT11.h>
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-
+int const tiempoAnimated=180;
 /*Ceja parts*/
 byte ceja11[8]={B00000,
                 B00000,
@@ -89,6 +89,43 @@ byte ojo33[8]={ B00100,
 
 
 void setup() {
+  creaCaracteres();
+  lcd.begin(20,4);
+  mostrarOjos();
+  //delay(1000);
+setEyesFullRight();
+
+}
+
+void loop() {
+  animacionSensando();
+}
+
+
+void setEyesFullRight(){
+   for (int positionCounter = 0; positionCounter < 5; positionCounter++) {
+   // scroll one position right:
+  lcd.scrollDisplayRight();
+  // wait a bit:
+  delay(tiempoAnimated);
+  }
+}
+void animacionSensando(){
+
+ for (int positionCounter = 0; positionCounter < 10; positionCounter++) {
+   // scroll one position right:
+  lcd.scrollDisplayLeft();
+  // wait a bit:
+  delay(tiempoAnimated);
+  }
+ for (int positionCounter = 0; positionCounter < 10; positionCounter++) {
+    // scroll one position right:
+    lcd.scrollDisplayRight();
+    // wait a bit:
+    delay(tiempoAnimated);
+  }
+}
+void creaCaracteres(){
 lcd.createChar(byte(0),ojo11);
 lcd.createChar(byte(1),ojo21);
 lcd.createChar(byte(2),ojo13);
@@ -96,8 +133,9 @@ lcd.createChar(byte(3),ojo31);
 lcd.createChar(byte(4),ojo33);
 lcd.createChar(byte(5),ceja11);
 lcd.createChar (byte(6),ceja13);
-lcd.begin(20,4);
-lcd.setCursor(5,0);
+}
+void mostrarOjos(){
+  lcd.setCursor(5,0);
 lcd.write(byte(5));
 lcd.write(B10110000);
 lcd.write(byte(6));
@@ -129,9 +167,5 @@ lcd.setCursor(12,3);
 lcd.write(byte(3));
 lcd.write(B10110000);
 lcd.write(byte(4));
-}
-
-void loop() {
-  
 }
 
