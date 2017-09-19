@@ -48,7 +48,7 @@ const int pinhumsub=A0;//Para humedad en el piso.
 const int pinrain=10;
 const int pinAmbtemp=8;
 float humAmb=0;
-int humSub=0;
+float humSub=0;
 float tempe=0;
 byte presenciaRain=LOW;
 int err;
@@ -64,7 +64,9 @@ void setup() {
  // lcd.print("hello, world!");
   
 }
-
+byte riegoInteligente(){
+   
+}
 void loop() {
   
   // Guarda el resultado leído de una pulsación por teclado:
@@ -143,9 +145,12 @@ void LCDmenu()
 
   // Menu
   lcd.clear();
-  lcd.setCursor(2, 0); lcd.print("Activar Sistema");
-  lcd.setCursor(2, 1); lcd.print("Desactivar Sistema");
-  lcd.setCursor(2, 2); lcd.print("Salir");
+  lcd.setCursor(2, 0); 
+  lcd.print("---Activar Sistema---");
+  lcd.setCursor(2, 1); 
+  lcd.print("---Desactivar Sistema---");
+  lcd.setCursor(2, 2); 
+  lcd.print("---Salir---");
 
 
   // Mientras no se pulse sobre salir, no se saldrá a la pantalla principal:
@@ -170,11 +175,11 @@ void LCDmenu()
     // Según la opción elegida del menú, se llama a otro menú o se cierra el menú actual:
     switch( opcMenu )
     {
-      case 0:       // Se accede al menú de encendido y apagado de los leds.
-       
+      case 0:       // Activar modo de automático riego.
+        
         opcMenu = -2;
         break;
-      case 1:       // Se accede al menú de ajuste de brillo de los leds.
+      case 1:       // Desactivar.
       
         opcMenu = -2;
         break;
@@ -236,4 +241,6 @@ void getButtonPush(char *resultButton, int pin, int pause)
     delay(pause);
   }
 }
+
+//Crear una función donde 
 /*----------------------------------------------------------------------------------------------------------*/
