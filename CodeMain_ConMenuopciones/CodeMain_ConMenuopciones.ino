@@ -50,8 +50,22 @@ const int pinAmbtemp=8;
 float humAmb=0;
 float humSub=0;
 float tempe=0;
-byte presenciaRain=LOW;
+int presenciaRain=LOW;
 int err;
+const int boton1=6;//Derecha.
+const int boton2=7;//Abajo.
+const int boton3=9;//Izquierda.
+const int boton4=0;//Arriba.
+int read1;
+int read2;
+int read3;
+int read4;
+const float umbralHumSub=800;
+const float umbralHumAmb=50;
+const float tempMin=24.0;
+const float tempMax=32.9;
+int riega=0;
+int presenciaLuz;
 DHT11 dht11(pinAmbtemp);
 void setup() {
   pinMode(10, INPUT);
@@ -62,6 +76,10 @@ void setup() {
   lcd.createChar(1, arrowDown);
   // Print a message to the LCD.
  // lcd.print("hello, world!");
+ pinMode(boton1, INPUT_PULLUP);
+ pinMode(boton2,INPUT_PULLUP);
+ pinMode(boton3,INPUT_PULLUP);
+ pinMode(boton4,INPUT_PULLUP);
   
 }
 byte riegoInteligente(){
@@ -73,12 +91,12 @@ void loop() {
   char resultButton[7] = "null";
 
   // Se imprime la pantalla de inicio:
-  lcd.setCursor(5, 0); lcd.print("***Sistema Irrigafree***");
-  lcd.setCursor(0, 1); lcd.print("Hecho por Jorge Coral");
-  lcd.setCursor(7, 3); lcd.print("Presione "); lcd.write(byte(1));
+  lcd.setCursor(0, 0); lcd.print("*Sistema Irrigafree*");
+  lcd.setCursor(2, 1); lcd.print("By: Jorge Coral");
+  lcd.setCursor(5, 3); lcd.print("Presione "); lcd.write(byte(1));
 
   // Se comprueba si se ha pulsado un botón:
-  getButtonPush( resultButton, 0, 200);
+  getButtonPush( resultButton,200);
 
   // Si se pulsa la tecla abajo, se entra en el menú:
   if( !strcmp(resultButton,"bottom"))
@@ -144,19 +162,22 @@ void LCDmenu()
 
 
   // Menu
+  menuSecun:
   lcd.clear();
-  lcd.setCursor(2, 0); 
-  lcd.print("---Activar Sistema---");
-  lcd.setCursor(2, 1); 
-  lcd.print("---Desactivar Sistema---");
-  lcd.setCursor(2, 2); 
-  lcd.print("---Salir---");
+  lcd.setCursor(1, 0); 
+  lcd.print("-Activar Sistema-");
+  lcd.setCursor(1, 1); 
+  lcd.print("-Desactivar Sistema-");
+  lcd.setCursor(1, 2); 
+  lcd.print("-Salir-");
+  lcd.setCursor(0,3);
+  lcd.print("[Seleccione alguna]");
 
 
   // Mientras no se pulse sobre salir, no se saldrá a la pantalla principal:
   do{
     strcpy(resultButton,"null");
-    getButtonPush( resultButton, 0, 200);
+    getButtonPush( resultButton, 200);
 
     // Cursor que indica la opción seleccionada:
     lcd.setCursor(0, posCursor); lcd.write(byte(0));
@@ -176,15 +197,14 @@ void LCDmenu()
     switch( opcMenu )
     {
       case 0:       // Activar modo de automático riego.
-        
+        riegoAutomatico();
         opcMenu = -2;
+        goto menuSecun;
         break;
-      case 1:       // Desactivar.
-      
+      case 1:       // Dormir Sistema.
         opcMenu = -2;
         break;
       case 2:       // Salir a la pantalla principal.
-      
         opcMenu = -1;
         lcd.clear();
         break;
@@ -218,29 +238,95 @@ void LCDMueveCursor(int *pos, int max, char ope)
 /*----------------------------------------------------------------------------------------------------------*/
 
 // PROCEDIMIENTO QUE COMPRUEBA SI HA HABIDO NUEVAS PULSACIONES CON LOS BOTONES:
-void getButtonPush(char *resultButton, int pin, int pause)
+void getButtonPush(char *resultButton, int pause)
 {
   // Precondición:  El parámetro pin ha de ser un pin Analógico del Arduino.
   // Poscondición:  El parámetro resultButton es una cadena por referencia que devolverá el botón pulsado.
   //          El parámetro pause ha de ser un numero entero igual o mayor que 0.
   // Info:      El teclado usado es este: http://giltesa.com/?p=11458 , según el tipo de resistencias habrá que cambiar las condicionales para adaptarse al valor leído desde el pin Analógico.
+  read1=digitalRead(boton1);
+  read2=digitalRead(boton2);
+  read3=digitalRead(boton3);
+  read4=digitalRead(boton4);
 
-  int data = analogRead(1);
-
-  if (data > 10)
-  {
-    if (data > 500 && data < 540)
+    if (read4==LOW)
       strcpy(resultButton,"up");
-    else if (data > 330 && data < 370)
+    if (read3==LOW)
       strcpy(resultButton,"left");
-    else if (data > 240 && data < 280)
+     if (read2==LOW)
       strcpy(resultButton,"bottom");
-    else if (data > 190 && data < 230)
+     if (read1==LOW)
       strcpy(resultButton,"right");
 
     delay(pause);
-  }
+  
 }
 
-//Crear una función donde 
-/*----------------------------------------------------------------------------------------------------------*/
+void riegoAutomatico(){
+  int contador=0;
+  riego:
+  if(digitalRead(boton3)==LOW){
+     lcd.clear();
+     return;
+  }
+  muestreaParametros();
+  despliegueParametros();
+  delay(1000);
+  lcd.clear();
+  lcd.home();
+  lcd.print("Verificando...");
+  if(presenciaRain==LOW){
+    if(humSub>umbralHumSub){//Un suelo ligeramente húmero daría valores típicos de 600-700. Un suelo seco tendrá valores de 800-1023.
+        if(humAmb<umbralHumAmb){//100% muy humedo, 0 % falta de humedad.
+          if((tempe>tempMin && tempe<tempMax)||presenciaLuz==LOW){
+                //Se manda un pulsto para activar el relevador durante un tiempo.
+                riega=1;
+          }else{
+            //Esperar.
+            riega=0;
+            //Función dormir arduino por un cierto tiempo. 
+
+            //Volver a intentar riego.
+            goto riego;
+          }
+        }else{
+          //Esperar.
+          riega=0;
+          //Función dormir arduino por un cierto tiempo.
+
+          //Volver a intentar riego.
+          goto riego;
+        }
+    }else{
+      //Esperad.
+      riega=0;
+      //Función dormir arduino por un cierto tiempo.
+
+      //Volver a intentar riego.
+      goto riego;
+    }
+  }else{
+    //Esperar.
+    riega=0;
+    //Función dormir arduino por un cierto tiempo.
+
+    //Volver a intentar riego.
+    goto riego;
+    
+  }
+lcd.clear();
+lcd.home();
+lcd.print("Sistema listo!");
+lcd.setCursor(0,1);
+lcd.print("Regando... ");
+for (int i=0;i<30;i++){
+  digitalWrite(13,HIGH);
+  if(i>20){
+  lcd.print(".");
+  }
+  delay(1000);
+}
+digitalWrite(13,LOW);
+}
+
+
