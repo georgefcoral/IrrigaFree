@@ -39,6 +39,7 @@
 
 // include the library code:
 #include <LiquidCrystal.h>
+#include <LowPower.h>
 #include <DHT11.h>
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
@@ -52,20 +53,38 @@ float humSub=0;
 float tempe=0;
 int presenciaRain=LOW;
 int err;
-const int boton1=6;//Derecha.
+const int boton1=9;//Derecha.
 const int boton2=7;//Abajo.
-const int boton3=9;//Izquierda.
+const int boton3=6;//Izquierda.
 const int boton4=0;//Arriba.
-int read1;
-int read2;
-int read3;
-int read4;
+
+int read1;//Lectura derecha.
+int read2;//Lectura abajo.
+int read3;//Lectura izquierda
+int read4;//Lectura arriba.
+
 const float umbralHumSub=800;
 const float umbralHumAmb=50;
 const float tempMin=24.0;
 const float tempMax=32.9;
+const int hourRain=1;
+const int minRain=60;
+const int hourHumSub=1;
+const int minHumSub=60;
+const int hourHumAmb=1;
+const int minHumAmb=60;
+const int hourTempLuz=1;
+const int minTempLuz=60;
 int riega=0;
-int presenciaLuz;
+int presenciaLuz=1;
+//Constantes y variables para fotoresistencia LDR.
+const long A = 1000;     //Resistencia en oscuridad en KΩ
+const int B = 15;        //Resistencia a la luz (10 Lux) en KΩ
+const int Rc = 10;       //Resistencia calibracion en KΩ
+const int LDRPin = A3;   //Pin del LDR
+const int umbralDarkness=5;
+int V;
+int ilum;
 DHT11 dht11(pinAmbtemp);
 void setup() {
   pinMode(10, INPUT);
@@ -80,10 +99,8 @@ void setup() {
  pinMode(boton2,INPUT_PULLUP);
  pinMode(boton3,INPUT_PULLUP);
  pinMode(boton4,INPUT_PULLUP);
-  
-}
-byte riegoInteligente(){
-   
+ pinMode(1,OUTPUT);
+ digitalWrite(1,HIGH);
 }
 void loop() {
   
@@ -108,7 +125,11 @@ void loop() {
 void muestreaParametros(){
    //Apartado de captura de datos:
   presenciaRain=digitalRead(pinrain);
+  V = analogRead(LDRPin);
+  ilum = ((long)V*A*10)/((long)B*Rc*(1024-V));    //usar si LDR entre A0 y Vcc (como en el esquema anterior);//Luz del sol es mayor a 2000
   humSub = analogRead(pinhumsub)*100/1024;
+  if(analogRead(pinhumsub))
+    humSub=0;
 if((err=dht11.read(humAmb, tempe))==0)
   {
   humAmb=humAmb;
@@ -120,7 +141,7 @@ if((err=dht11.read(humAmb, tempe))==0)
 
 void despliegueParametros(){
    //Apartado despliegue LCD:
-  
+  lcd.clear();
   lcd.noCursor();
   lcd.setCursor(1,0);
   lcd.print("Humedad del aire:");
@@ -132,7 +153,7 @@ void despliegueParametros(){
   lcd.setCursor(8,3);
   lcd.print(humSub);
   lcd.print("%");
-  delay(1500);
+  delay(5000);
   lcd.clear();
   lcd.setCursor(1,0);
   lcd.print("Temperatura:");
@@ -148,7 +169,7 @@ void despliegueParametros(){
   }else{
     lcd.print("Positivo");
   }
-  delay(1500);
+  delay(5000);
   lcd.clear();
  //Termina apartado de LCD:
 }
@@ -202,6 +223,7 @@ void LCDmenu()
         goto menuSecun;
         break;
       case 1:       // Dormir Sistema.
+        modoSleep();
         opcMenu = -2;
         break;
       case 2:       // Salir a la pantalla principal.
@@ -275,25 +297,45 @@ void riegoAutomatico(){
   lcd.clear();
   lcd.home();
   lcd.print("Verificando...");
-  if(presenciaRain==LOW){
+  if(presenciaRain==HIGH){
     if(humSub>umbralHumSub){//Un suelo ligeramente húmero daría valores típicos de 600-700. Un suelo seco tendrá valores de 800-1023.
         if(humAmb<umbralHumAmb){//100% muy humedo, 0 % falta de humedad.
-          if((tempe>tempMin && tempe<tempMax)||presenciaLuz==LOW){
+          if((tempe>tempMin && tempe<tempMax)||ilum<=umbralDarkness){
                 //Se manda un pulsto para activar el relevador durante un tiempo.
                 riega=1;
           }else{
             //Esperar.
+            lcd.clear();
+            lcd.setCursor(0,1);
+            lcd.print("No apto para riego.");
+            lcd.setCursor(0,2);
+            lcd.print("Prorroga de riego...");
+            for (int k=0;k<hourTempLuz;k++){//Cantidad de horas.
+              for(int j=0;j<minTempLuz;j++){//Una hora.
+                 for (int i=0;i<8;i++){//Un minuto.
+                     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);//Función dormir arduino por un cierto tiempo. 
+                                         }
+                                   }
+                            }
             riega=0;
-            //Función dormir arduino por un cierto tiempo. 
-
-            //Volver a intentar riego.
             goto riego;
           }
         }else{
           //Esperar.
           riega=0;
           //Función dormir arduino por un cierto tiempo.
-
+            lcd.clear();
+            lcd.setCursor(0,1);
+            lcd.print("No apto para riego");
+            lcd.setCursor(0,2);
+            lcd.print("Prorroga de riego...");
+            for (int k=0;k<hourHumAmb;k++){//Cantidad de horas.
+              for(int j=0;j<minHumAmb;j++){//Una hora.
+                 for (int i=0;i<8;i++){//Un minuto.
+                     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);//Función dormir arduino por un cierto tiempo. 
+                                         }
+                                    }
+                            }
           //Volver a intentar riego.
           goto riego;
         }
@@ -301,7 +343,18 @@ void riegoAutomatico(){
       //Esperad.
       riega=0;
       //Función dormir arduino por un cierto tiempo.
-
+            lcd.clear();
+            lcd.setCursor(0,1);
+            lcd.print("No apto para riego");
+            lcd.setCursor(0,2);
+            lcd.print("Prorroga de riego...");
+            for (int k=0;k<hourHumSub;k++){//Cantidad de horas.
+              for(int j=0;j<minHumSub;j++){//Una hora.
+                 for (int i=0;i<8;i++){//Un minuto.
+                     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);//Función dormir arduino por un cierto tiempo. 
+                                         }
+                                    }
+                            }
       //Volver a intentar riego.
       goto riego;
     }
@@ -309,7 +362,18 @@ void riegoAutomatico(){
     //Esperar.
     riega=0;
     //Función dormir arduino por un cierto tiempo.
-
+            lcd.clear();
+            lcd.setCursor(0,1);
+            lcd.print("No apto para riego");
+            lcd.setCursor(0,2);
+            lcd.print("Prorroga de riego...");
+            for (int k=0;k<hourRain;k++){//Cantidad de horas.
+              for(int j=0;j<minRain;j++){//Una hora.
+                 for (int i=0;i<8;i++){//Un minuto.
+                     LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);//Función dormir arduino por un cierto tiempo. 
+                                         }
+                                    }
+                            }
     //Volver a intentar riego.
     goto riego;
     
@@ -327,6 +391,29 @@ for (int i=0;i<30;i++){
   delay(1000);
 }
 digitalWrite(13,LOW);
+messegeWait();
+  for(int k=0;k<8;k++){
+      for(int j=0;j<60;j++){
+        for(int i=0;i<8;i++){
+            LowPower.idle(SLEEP_8S, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF,SPI_OFF, USART0_OFF, TWI_OFF);
+        }
+     }
+  }
 }
 
+
+void modoSleep(){  
+    // Enter power down state with ADC and BOD module disabled.
+    // Wake up when wake up pin is low.
+    messegeWait();
+    LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+    //LowPower.idle(SLEEP_FOREVER, ADC_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF,SPI_OFF, USART0_OFF, TWI_OFF);
+}
+
+void messegeWait()
+{   
+    lcd.clear();
+    lcd.setCursor(3,1);
+    lcd.print("--Modo Sleep--");
+}
 
